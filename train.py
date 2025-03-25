@@ -68,12 +68,14 @@ def create_pipeline():
     
 from sklearn.model_selection import cross_val_score
 
-def train_and_evaluate(X, y, test_size=0.2):
+def train_and_evaluate(X, y, test_size=0.2, smote = False):
     print("Training and Evaluating......")
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
     pipelines = create_pipeline()
     
+    if smote:
+        X_train, y_train = apply_smote(X_train, y_train)
     # pipelines['XGBoost'].set_params(model__scale_pos_weight=len(y_train[y_train==0])/max(1, len(y_train[y_train==1])) * 2)
     
     for name, pipeline in pipelines.items():
