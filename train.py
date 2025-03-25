@@ -9,6 +9,9 @@ import tqdm
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score, precision_score, recall_score
+from sklearn.model_selection import cross_validate
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, LabelEncoder
@@ -57,18 +60,41 @@ def create_pipeline():
     pipelines = {}
     for name, model in models.items():
         pipeline = Pipeline([
-            ('scaler', StandardScaler()),
             ('model', model)
         ])
         pipelines[name] = pipeline
 
     return pipelines
-def train(X, y):
     
-    print("Training......")
+from sklearn.model_selection import cross_val_score
+
+def train_and_evaluate(X, y, test_size=0.2):
+    print("Training and Evaluating......")
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
     pipelines = create_pipeline()
-    # for name, pipeline in pipelines.items():
+    
+    # pipelines['XGBoost'].set_params(model__scale_pos_weight=len(y_train[y_train==0])/max(1, len(y_train[y_train==1])) * 2)
+    
+    for name, pipeline in pipelines.items():
+        print(f"\nCross-Validation for {name}:")
+        scores = cross_validate(pipeline, X_train, y_train, cv=5, scoring=['f1', 'precision', 'recall'])
+        print(f"Mean F1: {scores['test_f1'].mean():.4f} (+/- {scores['test_f1'].std() * 2:.4f})")
+        print(f"Mean Precision: {scores['test_precision'].mean():.4f}")
+        print(f"Mean Recall: {scores['test_recall'].mean():.4f}")
         
+        pipeline.fit(X_train, y_train)
+        y_pred = pipeline.predict(X_test)
+        y_prob = pipeline.predict_proba(X_test)[:, 1]
+        
+        print(f"\nTest定義模型在測試集上的表現 {name}:")
+        print("Confusion Matrix:")
+        print(confusion_matrix(y_test, y_pred))
+        print("Classification Report:")
+        print(classification_report(y_test, y_pred))
+        print(f"ROC-AUC: {roc_auc_score(y_test, y_prob):.4f}")
+    
+    return pipelines
 
 def main():
     path = "D:\\aigo\stock_rocket_prediction\dataset\\train\\training.csv"
