@@ -1,5 +1,26 @@
 import pandas as pd
 import numpy as np
+from imblearn.over_sampling import SMOTE
+
+def apply_smote(X, y, sampling_strategy='auto', random_state = 42):
+    """
+    Apply SMOTE method for oversampling
+
+    Parameters
+    - X: Feature matrix
+    - y: Label vector
+    - sampling_strategy: Sampling strategy, 'auto' or a float (ratio of minority to majority class)
+    - random_state: Random seed
+    
+    Returns
+    - X_resampled: Oversampled feature matrix
+    - y_resampled: Oversampled label vector
+    """
+    
+    smote = SMOTE(sampling_strategy=sampling_strategy, random_state=random_state)
+    X_resampled, y_resampled = smote.fit_resample(X, y)
+    print(f"Original shape: {X.shape}, Resampled shape: {X_resampled.shape}")
+    return X_resampled, y_resampled
 
 
 def filter_features_by_missing_rate(df, threshold, missing_report=None, return_type='df', label_name = '飆股'):
